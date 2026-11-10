@@ -1,0 +1,42 @@
+{
+  "name": "sh-agent",
+  "version": "1.0.0",
+  "description": "前端开发者的 Agent 系统学习之旅 —— 基于 Datawhale Hello-Agents 教程的 TypeScript 实践与工程重构",
+  "type": "module",
+  "main": "learning/index.ts",
+  "scripts": {
+    "docs": "serve references/hello-agents/docs -l 3000 --cors",
+    "docs:py": "python -m http.server 3000 -d references/hello-agents/docs",
+    "dev:01": "tsx learning/01-fundamentals/src/index.ts",
+    "dev:02": "tsx learning/02-paradigms/src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sh-lsy/sh-agent.git"
+  },
+  "keywords": [
+    "ai-agent",
+    "typescript",
+    "hello-agents",
+    "react-agent",
+    "llm",
+    "vue3-developer"
+  ],
+  "author": "sh-lsy",
+  "license": "CC-BY-NC-SA-4.0",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "openai": "^4.86.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "serve": "^14.2.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

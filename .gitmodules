@@ -1,0 +1,3 @@
+[submodule "references/hello-agents"]
+	path = references/hello-agents
+	url = https://github.com/datawhalechina/hello-agents.git
