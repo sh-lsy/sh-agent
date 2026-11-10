@@ -6,21 +6,23 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-11+-orange.svg)](https://pnpm.io/)
+[![VitePress](https://img.shields.io/badge/VitePress-1.6+-emerald.svg)](https://vitepress.dev/)
 
 ---
 
 ## 🎯 项目愿景与设计初衷
 
-1. **从前端视角系统掌握 Agent 原理**：许多经典的 AI Agent 教程以 Python 生态（LangChain, LlamaIndex, AutoGen）为主。作为 Vue 3 前端开发者，通过使用 **TypeScript / ESM** 从零手写 Agent 循环，能够更深刻地理解 LLM 的思考、规划、工具调用（Function Calling）与异步状态驱动本质。
-2. **源码完整对照，随时离线学习**：完整归档 Hello-Agents 教程源码与文档作为本地镜像，免除因网络问题无法访问官方文档的困扰，支持一键在本地浏览器中极速离线阅读。
-3. **多台电脑无缝同步**：设计了清晰规范的 Git 工作流与环境配置模板，支持公司电脑、家庭电脑随时无痛拉取最新进度并继续学习。
-4. **AI 友好协同 (Agent-Ready)**：配备完善的 `AGENT.md` 上下文规约，方便后续使用 Antigravity、Cursor、Claude Code 等 AI 编程助手进行高质量结对编程与代码辅导。
+1. **从前端视角系统掌握 Agent 原理**：许多经典的 AI Agent 教程以 Python 生态为主。作为 Vue 3 前端开发者，通过使用 **TypeScript / ESM** 从零手写 Agent 循环，更深刻地理解 LLM 的思考、规划、工具调用（Function Calling）与异步状态驱动本质。
+2. **双版本本地文档同屏对照**：
+   * **参考文档**：完整的 Hello-Agents 官方教程（基于 Docsify），本地 3000 端口开箱即读，杜绝网络故障。
+   * **学习文档**：基于 **VitePress** 搭建的自主实战手册（本地 5173 端口），契合 Vue 3 开发者习惯，沉淀笔记与交互式 Agent 组件。
+   * 支持一键双开，左右分屏高效对照。
+3. **零踩坑跨电脑无缝同步**：提供一键环境初始化脚本与明确的 AI / 开发者引导，在新电脑上克隆后一键补齐所有子模块与缺失配置。
+4. **硬核 API Key 防泄漏安全机制**：内置 Git Pre-commit 钩子，每次提交自动扫描暂存区敏感 Token（如 `sk-xxxx`），彻底杜绝密钥意外推送到 GitHub 公开仓库。
 
 ---
 
 ## 📂 仓库整体架构与目录约定
-
-仓库采用“**参考资料隔离，学习成果独立**”的设计哲学：
 
 ```text
 sh-agent/
@@ -37,63 +39,82 @@ sh-agent/
 │   ├── 04-infrastructure/      # 第四部分：高级基础设施 (记忆/上下文/MCP通信/评估) (Ch 8~12)
 │   └── 05-applications/        # 第五部分：实战进阶与毕业设计 (旅行助手/Deep Research) (Ch 13~16)
 │
+├── docs/                       # [自主学习站点] 基于 VitePress 构建的学习实战手册
+│   ├── .vitepress/config.mts   # VitePress 导航、侧边栏与主题配置
+│   └── index.md                # 学习站点首页与章节导航
+│
+├── scripts/                    # 工程与自动化运维脚本
+│   ├── check-secrets.mjs       # Git Pre-commit API Key 敏感信息扫描拦截器
+│   └── setup.mjs               # 跨电脑一键初始化与环境对齐脚本
+│
 ├── .env.example                # 环境变量模板 (包含 DeepSeek/通义/硅基流动/OpenAI 等配置)
 ├── AGENT.md                    # 针对 AI 编辑器与协同 Agent 的架构上下文与编码规范
-├── package.json                # 项目依赖与便捷脚本 (pnpm 管理)
+├── package.json                # 项目依赖与双文档启动脚本 (pnpm 管理)
 ├── tsconfig.json               # TypeScript ESM 严格配置
 └── README.md                   # 仓库主说明文档
 ```
 
 ---
 
-## ⚡ 快速上手与多电脑同步
+## ⚡ 首次拉取与跨电脑初始化指南 (重要)
 
-### 1. 初次克隆（多台电脑拉取）
+当你（或 AI 编程助手）在一台新电脑上初次拉取本仓库时，请按以下步骤操作：
 
-由于参考资料采用 **Git Submodule** 挂载，克隆时请附带 `--recurse-submodules` 参数：
+### 方案 A：标准自动化流程（推荐）
 
 ```bash
-# 推荐克隆命令
+# 1. 递归克隆主仓库与子模块
 git clone --recurse-submodules https://github.com/sh-lsy/sh-agent.git
 cd sh-agent
 
-# 若初次克隆时未加子模块参数，可运行以下命令补全拉取：
-git submodule update --init --recursive
-```
-
-### 2. 安装依赖
-
-```bash
+# 2. 安装项目依赖
 pnpm install
+
+# 3. 运行一键初始化脚本 (自动补齐子模块、生成 .env、安装 Pre-commit 安全钩子)
+pnpm run setup
 ```
 
-### 3. 一键在本地浏览器离线阅读 Hello-Agents 教程
+运行 `pnpm run setup` 会自动完成：
+1. 检查 `references/hello-agents` 是否为空，若为空自动执行 `git submodule update --init --recursive`。
+2. 检查本地是否存在 `.env`，若缺失则自动从 `.env.example` 复制生成（**不会覆盖已有配置**）。
+3. 自动将 `scripts/check-secrets.mjs` 安装到 `.git/hooks/pre-commit`，激活敏感密钥防泄漏保护。
 
-原教程自带基于 Docsify 的网页结构，无需任何复杂构建即可本地极速预览：
+### 方案 B：纯手动分步执行（适合排错或无脚本环境）
 
 ```bash
-pnpm run docs
+# 若克隆时忘记加 --recurse-submodules，手动拉取子模块
+git submodule update --init --recursive
+
+# 手动复制环境变量模板
+cp .env.example .env    # Linux / macOS
+Copy-Item .env.example .env # Windows PowerShell
+
+# 手动编辑 .env 文件，填入你的 OPENAI_API_KEY
 ```
-启动后访问 [http://localhost:3000](http://localhost:3000) 即可开始沉浸式离线阅读。
 
-### 4. 配置模型 API Key
+---
 
-复制环境变量模板并填入你的大模型 Key（默认推荐 DeepSeek 或 硅基流动，性价比极高且完全兼容 OpenAI 协议）：
+## 🔒 密钥防泄漏安全机制 (API Key Protection)
 
-```bash
-# Windows PowerShell
-Copy-Item .env.example .env
+为了保护你的个人财产与 API 额度，本项目部署了**双层防护**：
 
-# macOS / Linux
-cp .env.example .env
-```
-用编辑器打开 `.env` 文件，填入你的 `OPENAI_API_KEY`。
+1. **第一层（忽略层）**：`.gitignore` 严格忽略 `.env`、`.env.local` 及所有包含私密配置的文件。
+2. **第二层（拦截层）**：`scripts/check-secrets.mjs` 会在每次 `git commit` 时自动扫描暂存区所有变更，若发现任何包含真实 `sk-xxxx` 密钥特征或明文赋值，将**强行中断提交并在控制台红色报警**。
 
-### 5. 运行第一阶段验证测试
+> [!CAUTION]
+> 绝不要将真实 API Key 写入代码中或提交到公共仓库。若必须在示例中演示，请使用 `your_api_key_here` 或 `sk-xxxx` 等白名单占位符。
 
-```bash
-pnpm run dev:01
-```
+---
+
+## 📖 双版本本地文档启动说明
+
+你可以根据需要单独启动某一个版本的文档，或使用一键命令同时打开两个文档对照学习：
+
+| 启动命令 | 文档类型 | 本地访问地址 | 说明 |
+| :--- | :--- | :--- | :--- |
+| **`pnpm run docs:ref`** | **Hello-Agents 官方教程** | [http://localhost:3000](http://localhost:3000) | 原版教程，Docsify 驱动，适合查看原版概念与思路 |
+| **`pnpm run docs:learn`** | **sh-agent 自主学习手册** | [http://localhost:5173](http://localhost:5173) | VitePress 驱动，包含你的笔记、TS 重构思路与组件演示 |
+| **`pnpm run docs:all`** | **双文档同时启动 (推荐)** | 3000 + 5173 端口 | 同时启动两个服务，建议左右分屏对照阅读 |
 
 ---
 
@@ -102,14 +123,16 @@ pnpm run dev:01
 | 操作场景 | 执行命令 |
 | :--- | :--- |
 | **开机开始学习前（拉取最新进度）** | `git pull origin main` |
-| **完成今日练习后（提交并推送）** | `git add .`<br>`git commit -m "feat(chapter-02): 完成 ReAct 循环 TS 实现"`<br>`git push origin main` |
-| **上游官方教程有勘误或更新时** | `git submodule update --remote --merge` |
+| **今日学习提交推送（自动触发防泄漏检查）** | `git add .`<br>`git commit -m "feat(paradigms): 完成 ReAct 循环 TS 实现"`<br>`git push origin main` |
+| **上游 Hello-Agents 官方教程更新时** | `git submodule update --remote --merge` |
 
 ---
 
 ## 🗺️ 学习路线与进度看板
 
 * [x] **基础设施搭建**：Git 仓库初始化、子模块挂载、TS/pnpm 环境配置、AI 开发规范设定。
+* [x] **双版本文档站点**：官方 Docsify 本地镜像 (3000) + 自主 VitePress 学习手册 (5173)。
+* [x] **多端环境对齐与防泄漏拦截**：`pnpm run setup` 一键同步 + Pre-commit 密钥拦截。
 * [ ] **第一部分：智能体与语言模型基础**
   * [x] 通用 LLM 客户端与连通性验证 (`learning/01-fundamentals/src/llm-client.ts`)
   * [ ] 提示词工程（Prompt Engineering）与结构化输出

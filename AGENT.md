@@ -53,6 +53,13 @@
 
 ## 5. 多电脑同步与协同执行纪律
 
-* 永远不要将包含了真实 API Key 的 `.env` 提交到 Git。
-* 当帮助用户编写新练习或完成某个章节时，应同步更新该章节的 `README.md` 与根目录 `README.md` 中的进度清单。
-* 编写的代码必须能通过 `npx tsx <file>` 或 `pnpm run test` 进行可复现的验证。
+* **API Key 安全红线**：
+  * 永远不要将包含了真实 API Key 的 `.env` 提交到 Git。
+  * 仓库已配置 `scripts/check-secrets.mjs` 作为 Git Pre-Commit 钩子，任何以 `sk-` 开头的非占位符密钥都会导致 commit 失败。AI 在生成测试用例或示例时，一律使用 `process.env.OPENAI_API_KEY` 或占位符 `your_api_key_here`。
+* **新环境对齐**：在新电脑上引导用户时，优先提示运行 `pnpm run setup` 自动对齐子模块、环境模板与安全钩子。
+* **双版本文档指引**：
+  * 原版参考：`pnpm run docs:ref` (端口 3000)
+  * 自主学习手册：`pnpm run docs:learn` (端口 5173，基于 VitePress)
+  * 双开：`pnpm run docs:all`
+* **进度跟踪**：当帮助用户编写新练习或完成某个章节时，应同步更新该章节的 `README.md` 与根目录 `README.md` 及 `docs/index.md` 中的进度清单。
+* **可复现验证**：编写的代码必须能通过 `npx tsx <file>` 或 `pnpm run test` 进行可复现的验证。

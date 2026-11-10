@@ -13,6 +13,8 @@ node_modules/
 dist/
 build/
 coverage/
+docs/.vitepress/dist
+docs/.vitepress/cache
 
 # Logs
 npm-debug.log*
