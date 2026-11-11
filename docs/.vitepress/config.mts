@@ -61,6 +61,7 @@ export default defineConfig({
     siteTitle: 'sh-agent 🤖',
     nav: [
       { text: '首页', link: '/' },
+      { text: '2026 架构蓝图 🌟', link: '/roadmap-2026' },
       { text: '基础认知', link: '/01-fundamentals' },
       { text: '经典范式', link: '/02-paradigms' },
       { text: '自研框架', link: '/03-framework' },
@@ -72,7 +73,10 @@ export default defineConfig({
     sidebar: [
       {
         text: '📚 学习导航与进度',
-        items: [{ text: '项目概览与设计初衷', link: '/' }],
+        items: [
+          { text: '项目概览与设计初衷', link: '/' },
+          { text: '2026 现代架构与重构蓝图', link: '/roadmap-2026' },
+        ],
       },
       {
         text: '第一部分：大模型与智能体基础',
