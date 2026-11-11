@@ -26,16 +26,25 @@
 
 ## 3. TypeScript 编码风格与工程规范
 
-1. **模块与运行时规范**：
+1. **模块与别名规范**：
    * Node.js v22+ 环境，全面采用 **ESM (ECMAScript Modules)**。
-   * 本地引用相对文件时注意遵循 NodeNext 规范（若使用相对路径导入，使用 `.js` 后缀，如 `import { foo } from './tools.js'`）。
-2. **工具 Schema 与类型系统**：
-   * 弃用 Python 中松散的字典形式，统一使用 **Zod** 定义 Agent 工具的输入参数 Schema。
-   * 对 Agent 的核心生命周期事件（思考、决策、工具调用、工具观察、最终回答）定义清晰的 TypeScript 联合类型。
-3. **函数式与组合式优先**：
+   * **优先使用路径别名**进行跨章节模块复用：
+     * `@fundamentals/*` -> `learning/01-fundamentals/src/*`
+     * `@paradigms/*` -> `learning/02-paradigms/src/*`
+     * `@framework/*` -> `learning/03-framework/src/*`
+     * `@infra/*` -> `learning/04-infrastructure/src/*`
+     * `@apps/*` -> `learning/05-applications/src/*`
+     * `@/*` -> `learning/*`
+2. **严禁照搬原书正则解析 Tool 方式**：
+   * 原版 Python 教程第 4 章采用正则字符串抠取 `Action: ...`。这是落后的过渡方案。
+   * 在 TypeScript 重构中，所有工具定义必须使用 **Zod** 定义 Schema，并通过大模型原生的 `tools` (Function Calling) 或结构化 JSON 进行交互。
+3. **流式与事件驱动优先 (AsyncGenerator)**：
+   * 严禁在 Agent 核心推理循环中仅依赖 `console.log` 作为唯一输出。
+   * 核心推理函数应设计为返回 `AsyncGenerator<AgentEvent>` 或派发强类型事件（`thought` \| `tool_call` \| `tool_result` \| `final_answer`），使得 CLI 终端与 `docs/` 下的 VitePress Vue 3 组件能够 100% 复用同一套核心逻辑。
+4. **防御性工具执行 (Defensive Tool Execution)**：
+   * 任何外部工具调用（天气查询、计算、搜索等）必须包裹在 `try/catch` 中；捕获到的错误格式化为清晰的错误文本作为 Observation 返回给大模型，促使大模型感知错误并自我纠偏，严禁直接让未捕获异常崩溃整个 Node 进程。
+5. **函数式与组合式优先**：
    * 契合 Vue 3 组合式 API（Composition API）思维，优先采用纯函数、高阶函数和组合对象模式，减少不必要的深层面向对象继承。
-4. **流式与异步优先**：
-   * 全面采用 `async / await`，针对 LLM 输出设计良好的异步迭代器（AsyncGenerator）或回调接口，便于未来无缝对接前端 UI 界面（如 SSE 流式渲染）。
 
 ---
 
@@ -45,9 +54,9 @@
 | :--- | :--- | :--- |
 | `dict` / `TypedDict` | `interface` / `type` + `z.infer<typeof schema>` | 参数必选/可选由 TS 严格保证 |
 | `@tool` 装饰器 | `AgentTool` 配置对象 (含 `name`, `description`, `parameters`, `execute`) | 简单直观，便于单测与工具集动态注入 |
-| `print(..., flush=True)` | `process.stdout.write` 或异步回调 | 适配控制台与 Web 流式渲染两端 |
+| 正则 `re.search` 匹配 Action | 大模型原生 `tools` (Function Calling) + Zod 参数校验 | 消除格式幻觉，达到生产级健壮性 |
 | 同步 `time.sleep` / 阻塞调用 | `await new Promise(...)` / 非阻塞异步 | 避免任何阻塞 Node 事件循环的行为 |
-| Python 正则 `re.search` 解析输出 | 优先采用大模型 JSON Mode / 结构化输出，降级使用正则清洗 | 增强鲁棒性，防御大模型格式幻觉 |
+| 单向 `print()` 输出日志 | `AsyncGenerator<AgentEvent>` 事件流 | 兼顾终端打印与 Vue 3 前端流式渲染 |
 
 ---
 

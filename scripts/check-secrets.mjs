@@ -12,8 +12,20 @@ const SECRET_PATTERNS = [
     regex: /sk-[a-zA-Z0-9_\-]{20,}/g,
   },
   {
-    name: '硬编码的 API_KEY 赋值语句',
-    regex: /(?:OPENAI_API_KEY|API_KEY|SECRET_KEY)\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,}['"]/gi,
+    name: 'Tavily 搜索 API Key (第 13、14 章实战必用)',
+    regex: /tvly-[a-zA-Z0-9_\-]{20,}/g,
+  },
+  {
+    name: 'LangSmith / LangChain API Key',
+    regex: /lsv2_(?:pt|sk)_[a-zA-Z0-9_\-]{20,}/g,
+  },
+  {
+    name: 'HuggingFace Token',
+    regex: /hf_[a-zA-Z0-9]{20,}/g,
+  },
+  {
+    name: '硬编码的 API_KEY / Token 赋值语句',
+    regex: /(?:OPENAI_API_KEY|API_KEY|SECRET_KEY|TAVILY_API_KEY|TOKEN)\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,}['"]/gi,
   },
 ];
 

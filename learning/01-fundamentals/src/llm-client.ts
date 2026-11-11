@@ -22,17 +22,35 @@ export function createLLMClient(): OpenAI {
 }
 
 /**
- * 默认使用的模型名称
+ * 模型角色路由（工业级轻量实践）：
+ * - fast: 极速且经济，适合高频工具调用 (Tool Calling) 与 ReAct 循环
+ * - reasoning: 强逻辑推理，适合任务拆解 (Planner) 与生成反思 (Reflection)
  */
-export const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'deepseek-chat';
+export type ModelRole = 'fast' | 'reasoning' | (string & {});
+
+export const MODEL_FAST = process.env.MODEL_FAST || process.env.DEFAULT_MODEL || 'deepseek-chat';
+export const MODEL_REASONING = process.env.MODEL_REASONING || 'deepseek-reasoner';
+
+export function resolveModel(roleOrName: ModelRole = 'fast'): string {
+  if (roleOrName === 'fast') return MODEL_FAST;
+  if (roleOrName === 'reasoning') return MODEL_REASONING;
+  return roleOrName;
+}
+
+/**
+ * 默认使用的模型名称（向前兼容）
+ */
+export const DEFAULT_MODEL = MODEL_FAST;
 
 /**
  * 极简的单轮对话调用封装
  */
-export async function chat(prompt: string, model: string = DEFAULT_MODEL): Promise<string> {
+export async function chat(prompt: string, model: ModelRole = 'fast'): Promise<string> {
   const client = createLLMClient();
+  const actualModel = resolveModel(model);
+
   const response = await client.chat.completions.create({
-    model,
+    model: actualModel,
     messages: [
       { role: 'system', content: 'You are a helpful and precise AI assistant.' },
       { role: 'user', content: prompt },
@@ -48,11 +66,13 @@ export async function chat(prompt: string, model: string = DEFAULT_MODEL): Promi
 export async function chatStream(
   prompt: string,
   onToken: (token: string) => void,
-  model: string = DEFAULT_MODEL
+  model: ModelRole = 'fast'
 ): Promise<string> {
   const client = createLLMClient();
+  const actualModel = resolveModel(model);
+
   const stream = await client.chat.completions.create({
-    model,
+    model: actualModel,
     stream: true,
     messages: [
       { role: 'system', content: 'You are a helpful and precise AI assistant.' },

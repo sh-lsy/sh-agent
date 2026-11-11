@@ -15,11 +15,18 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
+      "@fundamentals/*": ["learning/01-fundamentals/src/*"],
+      "@paradigms/*": ["learning/02-paradigms/src/*"],
+      "@framework/*": ["learning/03-framework/src/*"],
+      "@infra/*": ["learning/04-infrastructure/src/*"],
+      "@apps/*": ["learning/05-applications/src/*"],
       "@/*": ["learning/*"]
     }
   },
   "include": [
-    "learning/**/*"
+    "learning/**/*",
+    "docs/.vitepress/**/*",
+    "scripts/**/*"
   ],
   "exclude": [
     "node_modules",
