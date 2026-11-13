@@ -133,9 +133,16 @@ Copy-Item .env.example .env # Windows PowerShell
 * [x] **基础设施搭建**：Git 仓库初始化、子模块挂载、TS/pnpm 环境配置、AI 开发规范设定。
 * [x] **双版本文档站点**：官方 Docsify 本地镜像 (3000) + 自主 VitePress 学习手册 (5173)。
 * [x] **多端环境对齐与防泄漏拦截**：`pnpm run setup` 一键同步 + Pre-commit 密钥拦截。
-* [ ] **第一部分：智能体与语言模型基础**
+* [x] **第一部分：智能体基础认知**（2026-11 校准版，1 导读 + 7 子页）
   * [x] 通用 LLM 客户端与连通性验证 (`learning/01-fundamentals/src/llm-client.ts`)
-  * [ ] 提示词工程（Prompt Engineering）与结构化输出
+  * [x] 1.1 什么是智能体：四要素 → Model/Tools/Context/Loop、Harness ([笔记](docs/01-fundamentals/1.1-agent-essence.md))
+  * [x] 1.2 三类分类维度与双系统（含推理模型 `reasoning_content` 实测）([笔记](docs/01-fundamentals/1.2-agent-types.md))
+  * [x] 1.3 任务环境与 PEAS（补"上下文即环境""工具返回不可信"）([笔记](docs/01-fundamentals/1.3-environment.md))
+  * [x] 1.4 Agent Loop 与上下文预算 + 可回放实验台 ([笔记](docs/01-fundamentals/1.4-agent-loop.md))
+  * [x] 1.5 手写第一个智能体：Zod + 原生 Function Calling ([笔记](docs/01-fundamentals/1.5-first-agent.md))
+  * [x] 1.6 协议栈与适用边界：MCP 2026-07-28 / A2A / WebMCP / Workflow vs Agent ([笔记](docs/01-fundamentals/1.6-protocols-and-boundary.md))
+  * [x] 1.7 小结与 12 道自测 ([笔记](docs/01-fundamentals/1.7-summary.md))
+  * [ ] 提示词工程（Prompt Engineering）与结构化输出（下一步）
 * [ ] **第二部分：智能体经典范式构建**
   * [x] 工具抽象与 Zod 参数校验 (`learning/02-paradigms/src/tools.ts`)
   * [ ] ReAct 循环推理机 (Reasoning + Acting)

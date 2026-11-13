@@ -1,57 +1,69 @@
-# 第一部分：智能体与大模型基础认知
-
-> 对应原版教程：**第一章 初识智能体**、**第二章 智能体发展史**、**第三章 大语言模型基础**。
-
+---
+title: 本章导读与学习地图
 ---
 
-## 1. 核心理论梳理
+# 第一部分：智能体基础认知
 
-### 什么是智能体 (Agent)？
+> 对应 Hello-Agents **第一章 初识智能体**。
+> 骨架沿用原书（1.1 是什么 → 1.2 运行原理 → 1.3 动手 → 1.4 协作模式 → 小结），
+> 但**观点与工程实践校准到 2026 年 11 月**：补齐了 Harness、上下文工程、推理模型、MCP / WebMCP
+> 这些原书写作时尚未定型的内容，并删掉了已被淘汰的正则解析、纯文本 Action 协议等过渡方案。
 
-大语言模型（LLM）本身是一个强大的文本预测与泛化计算引擎，但它存在天然的局限：
-* **无时效性**：只能基于训练截止期前的数据回答。
-* **无行动力**：无法直接读写文件、查询实时数据库或调用外部 API。
-* **易产生幻觉**：面对复杂长链条多步推理容易中间出现逻辑偏差。
+## 这一章要回答的 5 个问题
 
-**智能体 (Agent)** 则赋予了 LLM “手和脚”：
-* **大脑 (Brain)**：负责规划、意图理解与决策。
-* **感知 (Perception)**：接收外部用户输入、多模态信息或系统告警。
-* **记忆 (Memory)**：短期工作记忆（上下文窗口）+ 长期记忆（向量检索）。
-* **行动 (Action / Tools)**：调用外部 API、计算器、检索工具或执行系统命令。
+1. 一个"智能体"和一个"调用了大模型的函数"到底差在哪？
+2. 它由哪几部分组成，各自负责什么？
+3. 它每一轮循环到底发生了什么，钱花在哪里？
+4. 从零手写一个能跑通的 Agent，最少需要哪些东西？
+5. 什么任务**不该**用 Agent——这可能是 2026 年最值钱的判断力。
 
----
+## 学习地图
 
-## 2. 前端开发者心智迁移
+| # | 小节 | 你会得到什么 | 对应原书 |
+| :-- | :--- | :--- | :--- |
+| 1.1 | [什么是智能体](/01-fundamentals/1.1-agent-essence) | 四要素 → Model/Tools/Context/Loop，理解 Harness | 1.1、1.1.1、1.1.2 |
+| 1.2 | [三类分类维度与双系统](/01-fundamentals/1.2-agent-types) | 反应 vs 规划、System 1 vs System 2 | 1.1.3 |
+| 1.3 | [任务环境与 PEAS](/01-fundamentals/1.3-environment) | 用 PEAS 描述任务，识别环境复杂度 | 1.2.1 |
+| 1.4 | [Agent Loop 与上下文](/01-fundamentals/1.4-agent-loop) | 五阶段循环、上下文预算、可回放实验台 | 1.2.2、1.2.3 |
+| 1.5 | [手写第一个智能体](/01-fundamentals/1.5-first-agent) | Zod + Function Calling 的可运行实现 | 1.3（含案例剖析） |
+| 1.6 | [协议栈与适用边界](/01-fundamentals/1.6-protocols-and-boundary) | MCP / A2A / WebMCP，Workflow vs Agent | 1.4 |
+| 1.7 | [小结与自测](/01-fundamentals/1.7-summary) | 12 道自测题 + 2026 延伸阅读 | 1.5、习题 |
 
-对于 Vue 3 开发者来说，Agent 的运行机制与前端状态驱动有着惊人的相似之处：
+## 三条阅读约定
 
-```text
-前端响应式范式:
-UI = Render(State)
-Event -> Update(State) -> Re-Render(UI)
+::: tip 约定一：代码只在本仓库的 learning/ 里
+文档里的代码片段都能在 `learning/01-fundamentals/src/` 找到对应实现，可用 `pnpm run dev:01` 复现。
+:::
 
-智能体决策范式:
-Action = LLM(Context, Tools)
-Observation = Execute(Action) -> AppendToContext -> Next LLM Loop
-```
+::: tip 约定二：不绑定模型型号
+正文只描述**能力维度**（是否推理、上下文长度、是否支持工具调用），不写"某某模型最强"。
+型号半年换一代，能力维度能撑更久。
+:::
 
----
+::: tip 约定三：协议都标版本日期
+提到 MCP / A2A 这类仍在演进的协议时，会写清**规范版本**（例如 MCP `2026-07-28`）。
+没有版本号的协议描述，等于没有描述。
+:::
 
-## 3. TypeScript 客户端实现设计
+## 前置准备
 
-在 `learning/01-fundamentals/src/llm-client.ts` 中，我们使用官方 `openai` Node.js SDK 构建了开箱即用的统一客户端：
-
-```typescript
-import OpenAI from 'openai';
-
-export function createLLMClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL || 'https://api.deepseek.com/v1';
-  return new OpenAI({ apiKey, baseURL });
-}
-```
-
-### 验证运行
 ```bash
-pnpm run dev:01
+# 1. 安装依赖
+pnpm install
+
+# 2. 配置模型（复制模板后填自己的 Key）
+cp .env.example .env
+
+# 3. 启动文档站（5173）
+pnpm run docs:learn
 ```
+
+本章的实验台会直接调用你 `.env` 里配置的模型。**每运行一次都会消耗 token**，页面有明确提示。
+
+## 学完你应该能
+
+- [ ] 用自己的话说清 Agent 与「一次 LLM 调用」的区别
+- [ ] 判断一个需求该用固定工作流还是自主 Agent
+- [ ] 写出带 Zod 校验、能自我纠错的工具定义
+- [ ] 看懂一条 Agent 轨迹里每一轮在干什么、花了多少 token
+- [ ] 给一个业务场景写出 PEAS 描述，并指出它的环境难点

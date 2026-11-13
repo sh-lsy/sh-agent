@@ -48,6 +48,9 @@ importers:
       vitest:
         specifier: ^3.2.7
         version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+      vue:
+        specifier: ^3.5.45
+        version: 3.5.45(typescript@5.8.2)
 
 packages:
 

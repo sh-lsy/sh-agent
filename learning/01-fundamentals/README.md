@@ -1,57 +1,105 @@
-# 第一部分：智能体与语言模型基础 (01-Fundamentals)
+# 第一部分：智能体基础认知 (01-Fundamentals)
 
-> 对应 Hello-Agents 教程：**第一章 初识智能体**、**第二章 智能体发展史**、**第三章 大语言模型基础**。
+> 对标 Datawhale **Hello-Agents 第一章 初识智能体**。
+> 骨架沿用原书，观点与工程实践**校准到 2026 年 11 月**：补齐 Harness、上下文工程、推理模型、
+> MCP 2026-07-28 / WebMCP，删掉正则解析 Action、纯文本协议等已淘汰方案。
 
----
-
-## 1. 学习目标与核心概念
-
-* **什么是智能体 (Agent)**：大语言模型（LLM）充当思考与决策“大脑”，结合感知输入（Perception）、内部记忆（Memory）、规划推理（Planning）与工具执行（Action/Tools），具备自主完成复杂任务的能力。
-* **Agent vs 传统工作流 (Workflow)**：
-  * **传统工作流**：硬编码的条件分支（if-else / DAG 图），执行路径确定。
-  * **智能体**：大模型根据当前环境状态动态决定下一步是调用工具、继续思考还是输出最终答案。
-* **前端开发者的认知迁移**：
-  * 从前端组件状态驱动（UI = f(state)）到 Agent 循环驱动（Next Action = LLM(Context, Tools)）。
-  * 将大模型输出看作异步外部事件流（SSE / EventStream），工具调用看作受控的异步副作用（Async Actions）。
+📖 完整讲解见文档站：`docs/01-fundamentals.md`（导读）+ `docs/01-fundamentals/1.1 ~ 1.7`
 
 ---
 
-## 2. Python 原作与 TypeScript 实现映射对照 (Code Mapping)
-
-| 原教程 Python 概念/代码 | TypeScript / 前端实现范式 | 说明与差异 |
-| :--- | :--- | :--- |
-| `openai` Python SDK (同步/异步) | `openai` Node.js SDK (原生 Promise / async-await) | TS 原生全异步，配合 ESM 模块规范 |
-| `python-dotenv` 读取 `.env` | `dotenv` 模块 | `import 'dotenv/config'`，通过 `process.env` 读取 |
-| `dict` 结构传递消息 | TypeScript `ChatCompletionMessageParam` 联合类型 | 强类型约束 `system` / `user` / `assistant` / `tool` 角色 |
-| `print(response)` 同步控制台输出 | `process.stdout.write` 或前端流式渲染 | TS 练习中先实现控制台流式与非流式打印 |
-
----
-
-## 3. 本地代码结构
+## 1. 代码结构
 
 ```text
 learning/01-fundamentals/
-├── README.md               # 学习笔记与概念对照
+├── README.md               # 本文件：设计与验收说明
 └── src/
-    ├── llm-client.ts       # 统一的大模型客户端封装（兼容各大国产与国际模型）
-    └── index.ts            # 基础调用与连通性验证可执行示例
+    ├── llm-client.ts       # 统一 OpenAI 兼容客户端（DeepSeek / GLM / Qwen / Ollama）
+    ├── first-agent.ts      # 核心：Zod + 原生 Function Calling + AsyncGenerator 事件流
+    ├── simulation.ts       # 离线仿真（不联网、数据自洽），供文档实验台复用
+    └── index.ts            # 串联连通性校验与第一个 Agent 的 CLI 入口
 ```
 
----
+## 2. 事件协议（前后端同构的关键）
 
-## 4. 运行与验证
+`first-agent.ts` 导出的事件是终端与文档组件的**唯一契约**：
 
-在根目录下复制环境变量文件并配置你的 API Key：
+| 事件 | 携带信息 | 为什么需要它 |
+| :--- | :--- | :--- |
+| `round_start` | `round` | 前端按轮次分组，才能表达"循环"而不是"流水线" |
+| `reasoning` | `content` | 推理模型的思维链，与可见回答是**两份产物**，且同样计费 |
+| `thought` | `content` | 面向用户的可见回答（模型决定调工具时可能为空） |
+| `tool_call` | `tool`, `input` | 参数已经过 Zod 校验 |
+| `tool_result` | `output`, `ok`, `durationMs` | `ok` / `durationMs` 让前端能区分"失败"与"慢" |
+| `usage` | 本轮 + 会话累计 token | 上下文是有预算的资源，必须可见 |
+| `final_answer` | `content`（Markdown） | 前端需要渲染而不是原样打印 |
+| `error` | `message`（含可操作建议） | 401 / 429 / 超时分别给不同提示 |
+
+> 2024 年的写法只有 thought / action / observation / final 四类事件，且不带 `round` 与 `usage`，
+> 前端无法做轮次分组与成本展示——这是本次重构的主要动因之一。
+
+## 3. 三个关键设计决策
+
+### 3.1 思维链与可见回答分离
+
+推理模型（DeepSeek / GLM / Qwen 思考模式）在决定调用工具时，`message.content` 为 `null`，
+真正的推理在 `message.reasoning_content` 里。只读 `content` 会导致：
+
+- 思考区永远空白
+- 已付费的 reasoning tokens 被丢弃
+
+代码同时兼容 `reasoning_content`（主流）与 `reasoning`（部分实现）。
+
+### 3.2 错误回灌，而不是抛异常
+
+工具执行失败时不崩溃进程，而是把错误格式化成可读文本作为 `role: 'tool'` 回灌。
+模型读到"缺少参数 city"后，下一轮会补参数——这才是"自我修正"的真实来源。
+
+### 3.3 仿真逻辑下沉
+
+旧版在"客户端兜底"和"服务端 mock"里各写了一份假流程，且 mock 会真的联网查天气，
+导致"上一句说晴朗、下一句返回英文烟霾"的自相矛盾。现在：
+
+- 仿真只有一份：`simulation.ts`
+- 不联网、文案自洽、事件序列与真实链路一致
+- 文档层只做 SSE 协议适配（`docs/.vitepress/server/playground-service.ts`）
+
+## 4. 前端心智对照（Vue 3）
+
+| Agent 概念 | Vue 3 对应物 | 差异点 |
+| :--- | :--- | :--- |
+| Context | Pinia store | 每次请求都要整体传输，等于每次付全量运费 |
+| Tools | 事件处理器 / RPC | 模型只 emit 意图，执行与兜底在你的代码里 |
+| Model | computed | 输入变才重算；但不保证幂等，同输入可能不同输出 |
+| Loop | 调度器 | 循环何时停由模型判断，必须外加停止条件 |
+| AgentEvent | Redux Action | 强类型、可回放，终端与 UI 消费同一份 |
+
+## 5. 运行与验收
+
 ```bash
-# 复制环境变量模板
-cp .env.example .env
-# 编辑 .env 文件，填入你的 OPENAI_API_KEY
-```
+# 1) 真实模型跑一次完整循环（约 3 轮，消耗 2~4k tokens）
+npx tsx learning/01-fundamentals/src/first-agent.ts
 
-执行本章快速验证脚本：
-```bash
+# 2) 连通性 + 流式 + Agent 全流程
 pnpm run dev:01
-# 或使用 npx
-npx tsx learning/01-fundamentals/src/index.ts
+
+# 3) 类型检查（不产生费用）
+npx tsc --noEmit
+
+# 4) 文档站（实验台在 1.4 节）
+pnpm run docs:learn
 ```
-若控制台成功输出大模型的打招呼回答，说明基础环境与 LLM 通信链路准备完毕！
+
+验收点：
+
+- [x] 真实模型下能输出 `reasoning` / `usage` 事件
+- [x] 429 / 401 / 超时给出不同提示，不静默降级
+- [x] 工具失败时模型能在后续轮次修正参数
+- [x] 仿真模式不联网、数据自洽
+- [x] 文档实验台支持暂停 / 单步 / 变速 / 重播，且变速不重发请求
+
+## 6. 已知限制
+
+- 天气工具主源为 `Open-Meteo`（WMO 标准代码 + 观测时间），`wttr.in` 仅作备源；两者都不可用时返回带 `【查询失败】` 的错误文本，让模型自己重试，而不是编造数据。
+- `maxIterations` 默认 6，未做 token 预算硬上限（留给第 4 部分「上下文工程」展开）。
+- 未接入 MCP 客户端；1.6 节只讲协议与边界，实现在第 4 部分。

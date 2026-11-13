@@ -5,6 +5,11 @@ hero:
   name: "sh-agent"
   text: "前端开发者的 Agent 系统学习手册"
   tagline: "基于 Datawhale Hello-Agents 教程的 TypeScript 实践与工程重构"
+  image:
+    src: /images/art/hero-loop.png
+    alt: 智能体循环：模型在环中反复推理与行动
+    width: 694
+    height: 687
   actions:
     - theme: brand
       text: 开始学习 🚀
@@ -31,7 +36,7 @@ features:
 
 | 章节模块 | 原著内容对照 | 实践与 TS 重构重点 | 状态 |
 | :--- | :--- | :--- | :--- |
-| **01. 基础认知** | Hello-Agents Ch 1~3 | 统一 OpenAI 客户端、多国产模型接入、流式与非流式调用 | 🟢 已就绪 |
+| **01. 基础认知** | Hello-Agents Ch 1（骨架对齐，观点校准到 2026-11） | 7 节子页 + 可回放 Agent Loop 实验台、协议栈、PEAS、12 题自测 | 🟢 已完成 |
 | **02. 经典范式** | Hello-Agents Ch 4~5 | ReAct 推理机、Plan-and-Solve 求解器、Reflection 反思机制 | 🟡 进行中 |
 | **03. 自研框架** | Hello-Agents Ch 6~7 | 组合式 Agent 运行时架构、事件驱动、中间件机制 | ⚪ 规划中 |
 | **04. 基础设施** | Hello-Agents Ch 8~12 | 记忆系统、上下文预算裁剪、MCP (Model Context Protocol) 协议 | ⚪ 规划中 |

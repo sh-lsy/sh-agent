@@ -1,0 +1,58 @@
+/**
+ * 第一章「智能体基础」设计令牌
+ * 目标：一套 token 同时服务亮/暗主题，替换组件里散落的硬编码色值。
+ * 约束：正文色与所在表面（surface）对比度 ≥ 4.5:1（WCAG AA）。
+ */
+
+:root {
+  /* ---------- 表面与描边 ---------- */
+  --sh-surface: #ffffff;
+  --sh-surface-2: #f6f6f7;
+  --sh-surface-3: #ececee;
+  --sh-border: #e2e2e3;
+  --sh-border-strong: #c8c8cc;
+
+  /* ---------- 语义色：正文可读级（亮色主题） ---------- */
+  --sh-thought: #6d28d9;
+  --sh-action: #1d4ed8;
+  --sh-observe: #047857;
+  --sh-final: #b45309;
+  --sh-danger: #be123c;
+
+  /* ---------- 语义色：底色/描边（带透明，用于卡片左侧色条与节点激活） ---------- */
+  --sh-thought-bg: rgba(109, 40, 217, 0.08);
+  --sh-action-bg: rgba(29, 78, 216, 0.08);
+  --sh-observe-bg: rgba(4, 120, 87, 0.08);
+  --sh-final-bg: rgba(180, 83, 9, 0.08);
+
+  /* ---------- 尺寸与节奏 ---------- */
+  --sh-radius-sm: 6px;
+  --sh-radius: 10px;
+  --sh-radius-lg: 14px;
+  --sh-gap: 12px;
+  --sh-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --sh-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --sh-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  --sh-surface: #202127;
+  --sh-surface-2: #1b1b1f;
+  --sh-surface-3: #27272e;
+  --sh-border: #2e2e32;
+  --sh-border-strong: #3f3f46;
+
+  /* 亮色系在深底上仍保持 ≥ 7:1，避免小字号发灰 */
+  --sh-thought: #c4b5fd;
+  --sh-action: #93c5fd;
+  --sh-observe: #6ee7b7;
+  --sh-final: #fcd34d;
+  --sh-danger: #fda4af;
+
+  --sh-thought-bg: rgba(196, 181, 253, 0.12);
+  --sh-action-bg: rgba(147, 197, 253, 0.12);
+  --sh-observe-bg: rgba(110, 231, 183, 0.12);
+  --sh-final-bg: rgba(252, 211, 77, 0.12);
+
+  --sh-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
