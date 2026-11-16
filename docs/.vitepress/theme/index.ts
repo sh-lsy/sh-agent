@@ -14,6 +14,8 @@ import HarnessDiagram from './components/HarnessDiagram.vue';
 import PathCompare from './components/PathCompare.vue';
 import WorkflowVsAgent from './components/WorkflowVsAgent.vue';
 import ContextBudget from './components/ContextBudget.vue';
+import EnvironmentMap from './components/EnvironmentMap.vue';
+import EventFlow from './components/EventFlow.vue';
 
 export default {
   extends: DefaultTheme,
@@ -28,5 +30,7 @@ export default {
     app.component('PathCompare', PathCompare);
     app.component('WorkflowVsAgent', WorkflowVsAgent);
     app.component('ContextBudget', ContextBudget);
+    app.component('EnvironmentMap', EnvironmentMap);
+    app.component('EventFlow', EventFlow);
   },
 };
