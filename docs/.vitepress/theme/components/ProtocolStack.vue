@@ -2,10 +2,10 @@
 import { ref } from 'vue';
 
 /**
- * 2026 年智能体协议栈
+ * 智能体协议栈
  *
  * 一个常见误解是把 MCP 当成"智能体的全部协议"。
- * 实际上 2026 年的协议已经分层：纵向接工具、横向连同行、单独一层管交易授权、还有一层管可观测。
+ * 实际上协议已经分层：纵向接工具、横向连同行、单独一层管交易授权、还有一层管可观测。
  */
 
 interface Layer {
@@ -40,7 +40,7 @@ const layers: Layer[] = [
     status: 'v1.0.1 稳定',
     detail:
       '解决"甲 Agent 怎么找到乙 Agent、把子任务委派过去、再拿回结果"。靠 Agent Card（/.well-known/agent-card.json）声明能力。IBM 的 ACP 已于 2025-08 并入 A2A，跨厂商的横向协议基本收敛为这一个。',
-    owner: 'Google 发起，2026-08 进入 AAIF；2026-04 时已有 150+ 组织参与',
+    owner: 'Google 发起，已捐入 Linux Foundation 的 AAIF，150+ 组织参与',
   },
   {
     key: 'commerce',

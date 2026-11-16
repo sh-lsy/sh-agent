@@ -1,8 +1,8 @@
 # 第一部分：智能体基础认知 (01-Fundamentals)
 
 > 对标 Datawhale **Hello-Agents 第一章 初识智能体**。
-> 骨架沿用原书，观点与工程实践**校准到 2026 年 11 月**：补齐 Harness、上下文工程、推理模型、
-> MCP 2026-07-28 / WebMCP，删掉正则解析 Action、纯文本协议等已淘汰方案。
+> 骨架沿用原书，并补齐了 Harness、上下文工程、推理模型、MCP / WebMCP 等原书未定型的内容，
+> 同时删掉正则解析 Action、纯文本协议等已淘汰方案。内容基线见文档站导读页。
 
 📖 完整讲解见文档站：`docs/01-fundamentals.md`（导读）+ `docs/01-fundamentals/1.1 ~ 1.7`
 
@@ -35,7 +35,7 @@ learning/01-fundamentals/
 | `final_answer` | `content`（Markdown） | 前端需要渲染而不是原样打印 |
 | `error` | `message`（含可操作建议） | 401 / 429 / 超时分别给不同提示 |
 
-> 2024 年的写法只有 thought / action / observation / final 四类事件，且不带 `round` 与 `usage`，
+> 早期的写法只有 thought / action / observation / final 四类事件，且不带 `round` 与 `usage`，
 > 前端无法做轮次分组与成本展示——这是本次重构的主要动因之一。
 
 ## 3. 三个关键设计决策

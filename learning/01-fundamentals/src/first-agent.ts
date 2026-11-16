@@ -10,7 +10,7 @@ import { createLLMClient, resolveModel } from './llm-client.js';
 /**
  * 智能体运行时事件流。
  *
- * 与 2024 年的写法相比，这里多出两个 2026 年才成为刚需的事件：
+ * 与早期的写法相比，这里多出两个推理模型时代才成为刚需的事件：
  * - `reasoning`：推理模型（o 系列 / R1 类 / GLM / Qwen 思考模式）的「思维链」，
  *   与 `thought`（面向用户的可见回答）是两份不同的产物。只取 content 会把它丢掉。
  * - `usage`：每轮真实 token 计量。上下文是有预算的资源，看不到计量就谈不上工程化。
@@ -59,7 +59,7 @@ export interface AgentTool<TParams extends z.ZodTypeAny = any> {
 /**
  * 天气工具的数据源策略
  *
- * 2026 年的工程原则：宁可换源，也不要把"英文 + 不准"的数据丢给模型。
+ * 工程原则：宁可换源，也不要把"英文 + 不准"的数据丢给模型。
  *
  * - 主源：Open-Meteo（免 Key、WMO 标准天气代码、自带观测时间戳，精度优于 wttr.in）
  * - 备源：wttr.in（主源超时/不可达时降级，返回内容会写明来源）

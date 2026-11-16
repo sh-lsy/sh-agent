@@ -2,7 +2,7 @@ import { defaultTools, getOpenAITools } from './tools.js';
 
 async function main() {
   console.log('='.repeat(60));
-  console.log('🧩 sh-agent 第二部分：2026 现代工具定义体系 (defineTool 验证)');
+  console.log('🧩 sh-agent 第二部分：现代工具定义体系 (defineTool 验证)');
   console.log('='.repeat(60));
 
   console.log('\n[1] 验证工具注册与描述：');

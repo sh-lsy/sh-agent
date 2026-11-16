@@ -133,7 +133,7 @@ Copy-Item .env.example .env # Windows PowerShell
 * [x] **基础设施搭建**：Git 仓库初始化、子模块挂载、TS/pnpm 环境配置、AI 开发规范设定。
 * [x] **双版本文档站点**：官方 Docsify 本地镜像 (3000) + 自主 VitePress 学习手册 (5173)。
 * [x] **多端环境对齐与防泄漏拦截**：`pnpm run setup` 一键同步 + Pre-commit 密钥拦截。
-* [x] **第一部分：智能体基础认知**（2026-11 校准版，1 导读 + 7 子页）
+* [x] **第一部分：智能体基础认知**（1 导读 + 7 子页）
   * [x] 通用 LLM 客户端与连通性验证 (`learning/01-fundamentals/src/llm-client.ts`)
   * [x] 1.1 什么是智能体：四要素 → Model/Tools/Context/Loop、Harness ([笔记](docs/01-fundamentals/1.1-agent-essence.md))
   * [x] 1.2 三类分类维度与双系统（含推理模型 `reasoning_content` 实测）([笔记](docs/01-fundamentals/1.2-agent-types.md))

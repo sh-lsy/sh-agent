@@ -36,7 +36,7 @@ features:
 
 | 章节模块 | 原著内容对照 | 实践与 TS 重构重点 | 状态 |
 | :--- | :--- | :--- | :--- |
-| **01. 基础认知** | Hello-Agents Ch 1（骨架对齐，观点校准到 2026-11） | 7 节子页 + 可回放 Agent Loop 实验台、协议栈、PEAS、12 题自测 | 🟢 已完成 |
+| **01. 基础认知** | Hello-Agents Ch 1（骨架对齐 + 现代实践补注） | 7 节子页 + 可回放 Agent Loop 实验台、协议栈、PEAS、12 题自测 | 🟢 已完成 |
 | **02. 经典范式** | Hello-Agents Ch 4~5 | ReAct 推理机、Plan-and-Solve 求解器、Reflection 反思机制 | 🟡 进行中 |
 | **03. 自研框架** | Hello-Agents Ch 6~7 | 组合式 Agent 运行时架构、事件驱动、中间件机制 | ⚪ 规划中 |
 | **04. 基础设施** | Hello-Agents Ch 8~12 | 记忆系统、上下文预算裁剪、MCP (Model Context Protocol) 协议 | ⚪ 规划中 |

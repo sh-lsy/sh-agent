@@ -58,7 +58,7 @@ const zoneInfo = computed(() => {
       latency: '秒级',
       desc: '大方向先规划，小步执行时立即响应环境反馈。',
       cases: 'LLM Agent 的 Agent Loop、自动驾驶分层决策、CI 失败自动修复',
-      cost: '这是 2026 年绝大多数 Agent 的真实形态：把长任务切成「规划—反应」微循环。',
+      cost: '这是当下绝大多数 Agent 的真实形态：把长任务切成「规划—反应」微循环。',
     };
   }
   return {

@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 /**
  * 环境六性质 → 架构要求
  *
- * 原书给了四条（可观察性/随机性/多主体/序贯），2026 年要补两条
+ * 原书给了四条（可观察性/随机性/多主体/序贯），这里补两条
  * （上下文即环境、工具返回值不可信）。这里把"性质"和"你必须做的设计"
  * 直接连起来，避免读者背完概念却不知道要改什么。
  */
@@ -16,7 +16,7 @@ interface Prop {
   short: string;
   must: string;
   cost: string;
-  year?: '2026';
+  extra?: boolean;
 }
 
 const props: Prop[] = [
@@ -59,7 +59,7 @@ const props: Prop[] = [
     short: '模型能"看见"什么，完全由你塞进窗口的内容决定；窗口满了早期信息就被挤掉。',
     must: '上下文预算、摘要、任务状态对象',
     cost: '无限堆历史 → 关键信息被稀释、成本翻倍',
-    year: '2026',
+    extra: true,
   },
   {
     key: 'untrusted',
@@ -68,15 +68,15 @@ const props: Prop[] = [
     short: '工具返回的网页/邮件/Issue 里可能藏着指令，模型分不清"数据"和"命令"。',
     must: '把工具输出当数据处理 + 危险操作人工确认',
     cost: '直接把网页内容塞进上下文 → prompt injection',
-    year: '2026',
+    extra: true,
   },
 ];
 
 const active = ref('partial');
 const current = computed(() => props.find((p) => p.key === active.value) || props[0]);
-const show2026 = ref(true);
+const showExtras = ref(true);
 
-const shown = computed(() => (show2026.value ? props : props.filter((p) => !p.year)));
+const shown = computed(() => (showExtras.value ? props : props.filter((p) => !p.extra)));
 </script>
 
 <template>
@@ -84,8 +84,8 @@ const shown = computed(() => (show2026.value ? props : props.filter((p) => !p.ye
     <div class="em__head">
       <div class="em__title">环境的 6 个性质：每一个都对应一个必须做的设计</div>
       <label class="em__toggle">
-        <input v-model="show2026" type="checkbox" />
-        <span>包含 2026 新增的 2 条</span>
+        <input v-model="showExtras" type="checkbox" />
+        <span>包含补充的 2 条</span>
       </label>
     </div>
 
@@ -101,7 +101,7 @@ const shown = computed(() => (show2026.value ? props : props.filter((p) => !p.ye
         <svg class="em__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="p.svg"></svg>
         <span class="em__name">
           {{ p.name }}
-          <em v-if="p.year" class="em__tag">2026</em>
+          <em v-if="p.extra" class="em__tag">补充</em>
         </span>
         <span class="em__must">{{ p.must }}</span>
       </button>
