@@ -37,3 +37,6 @@ Thumbs.db
 scratch/
 tmp/
 temp/
+
+# 本地 AI 工具工作目录（进度记忆、临时产物），不属于项目内容
+.workbuddy/
