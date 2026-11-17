@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import type { AgentEvent, MetaEvent } from '@fundamentals/events';
 
 /**
  * Agent Loop 实验台（面向初学者的可回放版）
@@ -12,37 +13,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
  * 5. 网络与播放解耦：暂停/单步/变速都不会重新请求模型。
  */
 
-type EventType =
-  | 'meta'
-  | 'round_start'
-  | 'reasoning'
-  | 'thought'
-  | 'tool_call'
-  | 'tool_result'
-  | 'usage'
-  | 'final_answer'
-  | 'error';
-
-interface AgentEvent {
-  type: EventType;
-  round?: number;
-  content?: string;
-  tool?: string;
-  input?: Record<string, unknown>;
-  output?: string;
-  ok?: boolean;
-  durationMs?: number;
-  message?: string;
-  promptTokens?: number;
-  completionTokens?: number;
-  totalTokens?: number;
-  sessionPromptTokens?: number;
-  sessionTotalTokens?: number;
-  mode?: 'live' | 'simulation';
-  model?: string;
-  baseURL?: string;
-  reason?: string;
-}
+// 事件类型不再本地重定义：与 CLI / SSE 服务共用 learning 层契约（events.ts）
 
 interface Row {
   evt: AgentEvent;
@@ -62,11 +33,28 @@ const playing = ref(false);
 const status = ref<'idle' | 'connecting' | 'streaming' | 'done' | 'error'>('idle');
 const speed = ref(1);
 const errorText = ref('');
-const meta = ref<{ mode: 'live' | 'simulation'; model: string; baseURL: string; reason?: string } | null>(null);
+const meta = ref<Omit<MetaEvent, 'type'> | null>(null);
 const showRaw = ref(false);
 const showUsage = ref(false);
 const confirmedCost = ref(false);
 const pendingRun = ref(false);
+const runBtn = ref<HTMLButtonElement | null>(null);
+const confirmBtn = ref<HTMLButtonElement | null>(null);
+
+function onDialogKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') pendingRun.value = false;
+}
+
+watch(pendingRun, async (open) => {
+  if (open) {
+    await nextTick();
+    confirmBtn.value?.focus();
+    document.addEventListener('keydown', onDialogKey);
+  } else {
+    document.removeEventListener('keydown', onDialogKey);
+    runBtn.value?.focus();
+  }
+});
 const lastChunkAt = ref(0);
 const nowTs = ref(Date.now());
 const timelineEl = ref<HTMLElement | null>(null);
@@ -107,9 +95,10 @@ const rounds = computed(() => {
     step += 1;
     const row: Row = { evt: e, step };
     if (e.type === 'tool_call') {
+      // 优先按 callId 配对：同名工具一轮内重复/并行调用时不会误判
       row.toolDone = visible.value
         .slice(i + 1)
-        .some((x) => x.type === 'tool_result' && x.tool === e.tool);
+        .some((x) => x.type === 'tool_result' && (e.callId ? x.callId === e.callId : x.tool === e.tool));
     }
     const r = groups.find((g) => g.round === (e.round ?? 0));
     if (r) r.rows.push(row);
@@ -246,6 +235,46 @@ const ringNodes = computed(() =>
 
 const activeNode = computed(() => ringNodes.value.find((n) => n.key === currentPhase.value));
 
+/**
+ * 环形光点沿弧运动：按相位角在圆上插值。
+ * 旧写法用 transform transition 在节点间走弦线，光点会横穿圆心，
+ * "循环在转" 的隐喻被打断；这里始终沿 r=82 的弧走最短方向。
+ */
+const PHASE_ANGLE: Record<Phase, number> = {
+  idle: -90,
+  perceive: -90,
+  think: -18,
+  act: 54,
+  observe: 126,
+  answer: 198,
+};
+const pointAt = (deg: number) => {
+  const r = (deg * Math.PI) / 180;
+  return { x: 130 + Math.cos(r) * 82, y: 130 + Math.sin(r) * 82 };
+};
+const travelerPos = ref(pointAt(-90));
+let travelRaf = 0;
+watch(currentPhase, (to, from) => {
+  const a0 = PHASE_ANGLE[from ?? 'perceive'];
+  let delta = PHASE_ANGLE[to] - a0;
+  while (delta > 180) delta -= 360;
+  while (delta < -180) delta += 360;
+  cancelAnimationFrame(travelRaf);
+  const reduce =
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || delta === 0) {
+    travelerPos.value = pointAt(PHASE_ANGLE[to]);
+    return;
+  }
+  const t0 = performance.now();
+  const step = (t: number) => {
+    const k = Math.min(1, (t - t0) / 450);
+    travelerPos.value = pointAt(a0 + delta * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) travelRaf = requestAnimationFrame(step);
+  };
+  travelRaf = requestAnimationFrame(step);
+});
+
 const phaseLabel = computed(() => {
   if (currentPhase.value === 'idle') return '待运行';
   return phaseList.find((p) => p.key === currentPhase.value)?.label || '';
@@ -268,7 +297,8 @@ function dwellForNext() {
   const next = buffer.value[playhead.value];
   const text = String(next?.content ?? next?.output ?? next?.message ?? '');
   const base = 800 + Math.min(2200, text.length * 18); // 800ms ~ 3000ms
-  const byType = next?.type === 'final_answer' ? 2600 : next?.type === 'tool_result' ? base + 400 : base;
+  const byType =
+    next?.type === 'final_answer' ? Math.max(2600, base) : next?.type === 'tool_result' ? base + 400 : base;
   return Math.round(byType / speed.value);
 }
 
@@ -311,6 +341,7 @@ function stepBack() {
 }
 
 function replay() {
+  if (!buffer.value.length) return;
   playhead.value = 0;
   playing.value = true;
   tick();
@@ -370,7 +401,9 @@ async function checkStatus() {
     // 静态部署没有本地运行时：保持 null，由运行时错误兜底
   }
 }
-void checkStatus();
+onMounted(() => {
+  void checkStatus();
+});
 
 function requestRun() {
   if (status.value === 'connecting' || status.value === 'streaming') return;
@@ -387,10 +420,14 @@ function confirmRun() {
   void startRun();
 }
 
+let runAbort: AbortController | null = null;
+
 async function startRun() {
   if (status.value === 'connecting' || status.value === 'streaming') return;
 
   reset();
+  runAbort?.abort();
+  const my = (runAbort = new AbortController());
   status.value = 'connecting';
   playing.value = false;
   lastChunkAt.value = Date.now();
@@ -401,6 +438,7 @@ async function startRun() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: prompt.value }),
+      signal: my.signal,
     });
 
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -428,10 +466,10 @@ async function startRun() {
           continue;
         }
         try {
-          const evt = JSON.parse(payload) as AgentEvent;
+          const evt = JSON.parse(payload) as AgentEvent | MetaEvent;
           if (evt.type === 'meta') {
             meta.value = {
-              mode: (evt.mode as 'live' | 'simulation') || 'simulation',
+              mode: evt.mode || 'simulation',
               model: evt.model || '',
               baseURL: evt.baseURL || '',
               reason: evt.reason,
@@ -452,8 +490,14 @@ async function startRun() {
     if (status.value !== 'done') status.value = 'done';
     stopClock();
   } catch (err: unknown) {
+    if (runAbort !== my) return; // 旧请求被中止，不覆盖新一轮的状态
     status.value = 'error';
-    errorText.value = err instanceof Error ? err.message : String(err);
+    errorText.value =
+      err instanceof Error && err.name === 'AbortError'
+        ? '运行已中止（页面卸载或手动重跑）。'
+        : err instanceof Error
+          ? err.message
+          : String(err);
     stopClock();
   }
 }
@@ -476,8 +520,9 @@ function startClock() {
       lastChunkAt.value > 0 &&
       nowTs.value - lastChunkAt.value > IDLE_TIMEOUT_MS
     ) {
+      runAbort?.abort();
       status.value = 'error';
-      errorText.value = '超过 2 分钟没有收到任何数据（可能是模型排队、限流或网络中断）';
+      errorText.value = '超过 2 分钟没有收到任何数据（可能是模型排队、限流或网络中断），已中止本次运行。';
     }
   }, 500);
 }
@@ -492,6 +537,9 @@ function stopClock() {
 onBeforeUnmount(() => {
   if (timer) clearTimeout(timer);
   stopClock();
+  runAbort?.abort();
+  cancelAnimationFrame(travelRaf);
+  document.removeEventListener('keydown', onDialogKey);
 });
 
 // ---------------------------------------------------------------- 呈现辅助
@@ -619,7 +667,7 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
         placeholder="给 Agent 一个目标，例如：查天气并推荐景点"
       ></textarea>
       <div class="lab__actions">
-        <button class="lab__run" type="button" :disabled="!canPlay" @click="requestRun">
+        <button ref="runBtn" class="lab__run" type="button" :disabled="!canPlay" @click="requestRun">
           {{ status === 'connecting' || status === 'streaming' ? '运行中…' : '运行 Agent' }}
         </button>
       </div>
@@ -635,7 +683,7 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
         </p>
         <div class="lab__dialog-actions">
           <button type="button" class="lab__ghost" @click="pendingRun = false">取消</button>
-          <button type="button" class="lab__run" @click="confirmRun">知道了，开始</button>
+          <button ref="confirmBtn" type="button" class="lab__run" @click="confirmRun">知道了，开始</button>
         </div>
       </div>
     </div>
@@ -643,13 +691,15 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
     <!-- 旁白条：一句话说清"现在在干什么" -->
     <div class="lab__narrate" :class="`tone-${narration.tone}`" aria-live="polite">
       <span class="lab__narrate-icon" aria-hidden="true">{{ narration.icon }}</span>
-      <div class="lab__narrate-body">
-        <div class="lab__narrate-title">
-          {{ narration.title }}
-          <span v-if="activeStep" class="lab__narrate-step">第 {{ activeStep }} / {{ Math.max(totalSteps, activeStep) }} 步</span>
+      <Transition name="sh-fade" mode="out-in">
+        <div :key="activeStep" class="lab__narrate-body">
+          <div class="lab__narrate-title">
+            {{ narration.title }}
+            <span v-if="activeStep" class="lab__narrate-step">第 {{ activeStep }} / {{ Math.max(totalSteps, activeStep) }} 步</span>
+          </div>
+          <p class="lab__narrate-detail">{{ narration.detail }}</p>
         </div>
-        <p class="lab__narrate-detail">{{ narration.detail }}</p>
-      </div>
+      </Transition>
     </div>
 
     <!-- 主体：环形阶段 + 时间线 -->
@@ -672,13 +722,24 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
         </div>
 
         <svg class="lab__ring" viewBox="0 0 260 260" role="img" aria-label="Agent 循环的五个阶段">
-          <circle cx="130" cy="130" r="82" fill="none" stroke="var(--sh-border)" stroke-width="1" stroke-dasharray="4 6" />
+          <circle
+            :key="'ring-' + currentRound"
+            class="lab__ring-bg"
+            :class="{ 'is-loop': currentRound > 1 }"
+            cx="130"
+            cy="130"
+            r="82"
+            fill="none"
+            stroke="var(--sh-border)"
+            stroke-width="1"
+            stroke-dasharray="4 6"
+          />
 
           <!-- 跟着阶段跑的小光点：让"循环在转"这件事看得见 -->
           <circle
             v-if="activeNode"
             class="lab__traveler"
-            :style="{ transform: `translate(${activeNode.x}px, ${activeNode.y}px)` }"
+            :style="{ transform: `translate(${travelerPos.x}px, ${travelerPos.y}px)` }"
             r="5"
           />
 
@@ -705,7 +766,14 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
           </g>
           <text x="130" y="122" text-anchor="middle" class="lab__center-label">{{ phaseLabel }}</text>
           <text x="130" y="140" text-anchor="middle" class="lab__center-sub">{{ phasePlain }}</text>
-          <text x="130" y="158" text-anchor="middle" class="lab__center-round">
+          <text
+            :key="'round-' + currentRound"
+            x="130"
+            y="158"
+            text-anchor="middle"
+            class="lab__center-round"
+            :class="{ 'is-pulse': currentRound > 1 }"
+          >
             {{ currentRound ? `第 ${currentRound} 轮` : '未开始' }}
           </text>
         </svg>
@@ -1244,8 +1312,36 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
 .lab__traveler {
   fill: var(--vp-c-brand-1);
   opacity: 0.85;
-  transition: transform 0.45s var(--sh-ease);
   filter: drop-shadow(0 0 4px var(--vp-c-brand-1));
+}
+
+/* 跨轮：虚线环与轮次徽标一次脉冲，让「回到起点再转一圈」看得见 */
+.lab__ring-bg.is-loop {
+  animation: lab-ring 0.7s var(--sh-ease-out);
+}
+@keyframes lab-ring {
+  0% {
+    stroke: var(--vp-c-brand-1);
+    stroke-width: 2;
+  }
+  100% {
+    stroke: var(--sh-border);
+    stroke-width: 1;
+  }
+}
+.lab__center-round.is-pulse {
+  animation: lab-pulse 0.6s var(--sh-ease-out);
+}
+@keyframes lab-pulse {
+  0% {
+    opacity: 0.15;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .lab__node {
@@ -1756,6 +1852,28 @@ function parseProvenance(output?: string): { kind: 'live' | 'mock' | 'error'; te
 @media (max-width: 760px) {
   .lab {
     padding: 12px;
+  }
+  /* 触控目标 ≥40px：桌面 30px 的控件在手机上太难点 */
+  .lab__ctl {
+    width: 40px;
+    height: 40px;
+  }
+  .lab__ctl svg {
+    width: 16px;
+    height: 16px;
+  }
+  .lab__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+  .lab__speed {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+  .lab__switch {
+    min-height: 40px;
   }
   .lab__grid {
     grid-template-columns: minmax(0, 1fr);

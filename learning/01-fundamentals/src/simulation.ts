@@ -68,12 +68,25 @@ export async function* runSimulation(
     content: `好的，我先查一下${city}今天的实时天气，再根据天气为你挑合适的地方。`,
   };
 
+  // 与真实链路一致：usage 是「本轮请求」的计量，发生在工具执行之前
+  await sleep(stepDelay);
+  yield {
+    type: 'usage',
+    round: 1,
+    promptTokens: 486,
+    completionTokens: 92,
+    totalTokens: 578,
+    sessionPromptTokens: 486,
+    sessionTotalTokens: 578,
+  };
+
   await sleep(stepDelay);
   yield {
     type: 'tool_call',
     round: 1,
     tool: 'get_weather',
     input: { city },
+    callId: 'sim-r1-weather',
   };
 
   await sleep(stepDelay);
@@ -85,17 +98,7 @@ export async function* runSimulation(
     output: weatherText,
     ok: true,
     durationMs: 386,
-  };
-
-  await sleep(stepDelay);
-  yield {
-    type: 'usage',
-    round: 1,
-    promptTokens: 486,
-    completionTokens: 92,
-    totalTokens: 578,
-    sessionPromptTokens: 486,
-    sessionTotalTokens: 578,
+    callId: 'sim-r1-weather',
   };
 
   await sleep(stepDelay);
@@ -113,10 +116,22 @@ export async function* runSimulation(
 
   await sleep(stepDelay);
   yield {
+    type: 'usage',
+    round: 2,
+    promptTokens: 712,
+    completionTokens: 268,
+    totalTokens: 980,
+    sessionPromptTokens: 1198,
+    sessionTotalTokens: 1558,
+  };
+
+  await sleep(stepDelay);
+  yield {
     type: 'tool_call',
     round: 2,
     tool: 'get_attraction',
     input: { city, weather: fx.desc },
+    callId: 'sim-r2-attraction',
   };
 
   await sleep(stepDelay);
@@ -127,17 +142,7 @@ export async function* runSimulation(
     output: isBad ? fx.bad : fx.good,
     ok: true,
     durationMs: 142,
-  };
-
-  await sleep(stepDelay);
-  yield {
-    type: 'usage',
-    round: 2,
-    promptTokens: 712,
-    completionTokens: 268,
-    totalTokens: 980,
-    sessionPromptTokens: 1198,
-    sessionTotalTokens: 1558,
+    callId: 'sim-r2-attraction',
   };
 
   await sleep(stepDelay);

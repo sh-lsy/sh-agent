@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { chat, chatStream, DEFAULT_MODEL } from './llm-client.js';
 import { runFirstAgent } from './first-agent.js';
 
@@ -73,4 +74,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

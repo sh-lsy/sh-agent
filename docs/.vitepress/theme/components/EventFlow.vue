@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 /**
  * 一次工具调用的时序图
@@ -111,6 +111,14 @@ function reset() {
   stop();
   active.value = 0;
 }
+
+// 小屏竖排列表可能比视口高：自动播放时把当前步滚进视野（nearest 不扰动脉络）
+watch(active, async () => {
+  await nextTick();
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches) {
+    document.querySelector('.ef__list li.is-active')?.scrollIntoView({ block: 'nearest' });
+  }
+});
 
 const H = 70 + steps.length * 40;
 const laneY = 46;

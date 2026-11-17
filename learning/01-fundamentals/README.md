@@ -14,6 +14,7 @@
 learning/01-fundamentals/
 ├── README.md               # 本文件：设计与验收说明
 └── src/
+    ├── events.ts           # 事件契约（纯类型）：CLI / SSE / Vue 组件共用同一份
     ├── llm-client.ts       # 统一 OpenAI 兼容客户端（DeepSeek / GLM / Qwen / Ollama）
     ├── first-agent.ts      # 核心：Zod + 原生 Function Calling + AsyncGenerator 事件流
     ├── simulation.ts       # 离线仿真（不联网、数据自洽），供文档实验台复用
@@ -29,8 +30,8 @@ learning/01-fundamentals/
 | `round_start` | `round` | 前端按轮次分组，才能表达"循环"而不是"流水线" |
 | `reasoning` | `content` | 推理模型的思维链，与可见回答是**两份产物**，且同样计费 |
 | `thought` | `content` | 面向用户的可见回答（模型决定调工具时可能为空） |
-| `tool_call` | `tool`, `input` | 参数已经过 Zod 校验 |
-| `tool_result` | `output`, `ok`, `durationMs` | `ok` / `durationMs` 让前端能区分"失败"与"慢" |
+| `tool_call` | `tool`, `input`, `callId` | `input` 为模型原始 JSON，Zod 校验发生在执行前；`callId` 与 `tool_result` 配对 |
+| `tool_result` | `output`, `ok`, `durationMs`, `callId` | `ok` / `durationMs` 让前端能区分"失败"与"慢" |
 | `usage` | 本轮 + 会话累计 token | 上下文是有预算的资源，必须可见 |
 | `final_answer` | `content`（Markdown） | 前端需要渲染而不是原样打印 |
 | `error` | `message`（含可操作建议） | 401 / 429 / 超时分别给不同提示 |
@@ -97,6 +98,9 @@ pnpm run docs:learn
 - [x] 工具失败时模型能在后续轮次修正参数
 - [x] 仿真模式不联网、数据自洽
 - [x] 文档实验台支持暂停 / 单步 / 变速 / 重播，且变速不重发请求
+- [x] 事件契约下沉 `events.ts`，前端组件不再本地重定义类型
+- [x] 客户端断开 / 超时即 abort，不再为看不见的页面继续计费
+- [x] 文档站：侧栏整体折叠（状态记忆）+ 大屏宽版心 + 实验台弧线光点 / 跨轮脉冲
 
 ## 6. 已知限制
 

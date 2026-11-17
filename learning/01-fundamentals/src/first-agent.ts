@@ -1,46 +1,24 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { ChatCompletionTool, ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import type { ChatCompletionTool, ChatCompletionMessageParam, ChatCompletionMessage } from 'openai/resources/chat/completions';
+import type OpenAI from 'openai';
+import { pathToFileURL } from 'node:url';
 import { createLLMClient, resolveModel } from './llm-client.js';
+import type { AgentEvent } from './events.js';
 
 // ==============================================================================
 // 1. 类型定义：事件流与工具规约 (Types)
 // ==============================================================================
 
 /**
- * 智能体运行时事件流。
+ * 事件契约已下沉到纯类型模块 events.ts（不携带任何 Node/openai 运行时依赖，
+ * 浏览器组件可安全 import）。这里 re-export 保持既有导入路径兼容。
  *
- * 与早期的写法相比，这里多出两个推理模型时代才成为刚需的事件：
- * - `reasoning`：推理模型（o 系列 / R1 类 / GLM / Qwen 思考模式）的「思维链」，
- *   与 `thought`（面向用户的可见回答）是两份不同的产物。只取 content 会把它丢掉。
+ * 与早期写法相比多出两个推理模型时代的刚需事件：
+ * - `reasoning`：推理模型的思维链，与 `thought`（可见回答）是两份产物，只取 content 会丢掉它；
  * - `usage`：每轮真实 token 计量。上下文是有预算的资源，看不到计量就谈不上工程化。
- *
- * 前端视角：这是一组强类型 Redux Action，终端与 Vue 组件消费同一份事件。
  */
-export interface AgentEventBase {
-  /** 第几轮循环，从 1 开始。前端的「轮次分组」依赖它 */
-  round?: number;
-}
-
-export type AgentEvent = AgentEventBase &
-  (
-    | { type: 'round_start' }
-    | { type: 'reasoning'; content: string }
-    | { type: 'thought'; content: string }
-    | { type: 'tool_call'; tool: string; input: Record<string, unknown> }
-    | { type: 'tool_result'; tool: string; output: string; ok: boolean; durationMs: number }
-    | {
-        type: 'usage';
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-        /** 截至本轮，整条会话累计消耗 */
-        sessionPromptTokens: number;
-        sessionTotalTokens: number;
-      }
-    | { type: 'final_answer'; content: string }
-    | { type: 'error'; message: string }
-  );
+export type { AgentEvent, AgentEventBase, MetaEvent, PlaygroundEvent } from './events.js';
 
 /**
  * 工具定义接口 (Zod 作为单一真理源)
@@ -171,7 +149,7 @@ async function resolveCoords(city: string): Promise<{ lat: number; lon: number }
     )}&count=1&language=zh&format=json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
-    const data = (await res.json()) as any;
+    const data = (await res.json()) as { results?: { latitude: number; longitude: number }[] };
     const hit = data.results?.[0];
     return hit ? { lat: hit.latitude, lon: hit.longitude } : null;
   } catch {
@@ -190,7 +168,7 @@ async function fetchOpenMeteo(city: string): Promise<string> {
     latitude: String(coords.lat),
     longitude: String(coords.lon),
     current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
-    timezone: 'Asia/Shanghai',
+    timezone: 'auto',
   });
 
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
@@ -198,7 +176,16 @@ async function fetchOpenMeteo(city: string): Promise<string> {
   });
   if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
 
-  const data = (await res.json()) as any;
+  const data = (await res.json()) as {
+    current?: {
+      time?: string;
+      temperature_2m: number;
+      apparent_temperature: number;
+      relative_humidity_2m: number;
+      weather_code: number;
+      wind_speed_10m: number;
+    };
+  };
   const cur = data.current;
   if (!cur) throw new Error('Open-Meteo 返回空数据');
 
@@ -216,7 +203,16 @@ async function fetchWttr(city: string): Promise<string> {
   });
   if (!res.ok) throw new Error(`wttr.in HTTP ${res.status}`);
 
-  const data = (await res.json()) as any;
+  const data = (await res.json()) as {
+    current_condition?: {
+      weatherCode: string;
+      temp_C: string;
+      FeelsLikeC: string;
+      humidity: string;
+      localObsDateTime?: string;
+      weatherDesc?: { value: string }[];
+    }[];
+  };
   const cur = data.current_condition?.[0];
   if (!cur) throw new Error('wttr.in 返回空数据');
 
@@ -282,13 +278,14 @@ export const attractionTool: AgentTool = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ api_key: tavilyKey, query, search_depth: 'basic', include_answer: true }),
+          signal: AbortSignal.timeout(8000),
         });
-        const data = (await res.json()) as any;
+        const data = (await res.json()) as { answer?: string; results?: { title: string; content: string }[] };
         if (data.answer) return data.answer;
         if (data.results?.length) {
           return data.results
             .slice(0, 3)
-            .map((r: any) => `- ${r.title}: ${r.content}`)
+            .map((r) => `- ${r.title}: ${r.content}`)
             .join('\n');
         }
       } catch {
@@ -345,6 +342,8 @@ export interface RunAgentOptions {
   maxIterations?: number;
   model?: string;
   systemPrompt?: string;
+  /** 中止信号：客户端断开 / 超时时停止后续计费请求 */
+  signal?: AbortSignal;
 }
 
 const DEFAULT_SYSTEM_PROMPT = `你是一个专业的智能旅行助手。
@@ -370,9 +369,10 @@ export async function* runFirstAgent(
     maxIterations = 6,
     model = resolveModel('fast'),
     systemPrompt = DEFAULT_SYSTEM_PROMPT,
+    signal,
   } = options;
 
-  let client;
+  let client: OpenAI;
   try {
     client = createLLMClient();
   } catch (err: unknown) {
@@ -392,16 +392,23 @@ export async function* runFirstAgent(
   let sessionTotalTokens = 0;
 
   for (let round = 1; round <= maxIterations; round++) {
+    if (signal?.aborted) {
+      yield { type: 'error', message: '运行已中止（客户端断开或超时），不再发起新的计费请求。', round };
+      return;
+    }
     yield { type: 'round_start', round };
 
     let response;
     try {
-      response = await client.chat.completions.create({
-        model,
-        messages,
-        tools: openAITools,
-        tool_choice: 'auto',
-      });
+      response = await client.chat.completions.create(
+        {
+          model,
+          messages,
+          tools: openAITools,
+          tool_choice: 'auto',
+        },
+        { signal }
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       const hint = /401|invalid_api_key/i.test(msg)
@@ -415,7 +422,9 @@ export async function* runFirstAgent(
       return;
     }
 
-    const message: any = response.choices[0]?.message;
+    const message = response.choices[0]?.message as
+      | (ChatCompletionMessage & { reasoning_content?: string; reasoning?: string })
+      | undefined;
     if (!message) {
       yield { type: 'error', message: '大模型返回了空消息。' };
       return;
@@ -472,7 +481,7 @@ export async function* runFirstAgent(
         parsedArgs = { raw: rawArgs };
       }
 
-      yield { type: 'tool_call', tool: toolName, input: parsedArgs, round };
+      yield { type: 'tool_call', tool: toolName, input: parsedArgs, callId: call.id, round };
 
       const startedAt = Date.now();
       let toolOutput = '';
@@ -499,6 +508,7 @@ export async function* runFirstAgent(
         output: toolOutput,
         ok,
         durationMs: Date.now() - startedAt,
+        callId: call.id,
         round,
       };
 
@@ -566,6 +576,6 @@ async function cliRun() {
   }
 }
 
-if (process.argv[1]?.includes('first-agent')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   cliRun();
 }

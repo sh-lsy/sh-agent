@@ -81,7 +81,7 @@ const pct = (t: number) => Math.min(100, (t / BUDGET) * 100);
 
     <p v-if="segments.overflow" class="cb__warn">
       ⚠️ 超出窗口 {{ (segments.total - BUDGET).toLocaleString() }} tokens。
-      <strong>它不会报错</strong>，只会把最早的内容悄悄挤出去——任务跑到一半"忘了"开头说了什么，就是这个原因。
+      超限行为取决于提供方：有的直接报 <code>context_length_exceeded</code>，有的客户端静默截断、把最早的内容挤出去——任务跑到一半"忘了"开头说了什么，就是后者。无论哪种，预算控制都是 harness 的责任。
     </p>
     <p v-else-if="trimmed" class="cb__ok">
       ✅ 用"任务状态摘要 + 最近 3 轮"替代全量历史，同样的任务只占 {{ segments.total }} tokens，而且不会丢关键约束。
@@ -214,7 +214,7 @@ const pct = (t: number) => Math.min(100, (t / BUDGET) * 100);
 }
 .cb__warn {
   color: var(--sh-danger);
-  background: rgba(190, 18, 60, 0.08);
+  background: var(--sh-danger-bg);
   border-left: 3px solid var(--sh-danger);
 }
 .cb__ok {

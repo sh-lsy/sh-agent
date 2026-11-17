@@ -18,6 +18,7 @@
   --sh-observe: #047857;
   --sh-final: #b45309;
   --sh-danger: #be123c;
+  --sh-danger-bg: rgba(190, 18, 60, 0.08);
 
   /* ---------- 语义色：底色/描边（带透明，用于卡片左侧色条与节点激活） ---------- */
   --sh-thought-bg: rgba(109, 40, 217, 0.08);
@@ -48,6 +49,7 @@
   --sh-observe: #6ee7b7;
   --sh-final: #fcd34d;
   --sh-danger: #fda4af;
+  --sh-danger-bg: rgba(253, 164, 175, 0.12);
 
   --sh-thought-bg: rgba(196, 181, 253, 0.12);
   --sh-action-bg: rgba(147, 197, 253, 0.12);

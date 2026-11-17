@@ -134,7 +134,7 @@ function retry() {
 }
 .quiz__opt.is-miss {
   border-color: var(--sh-danger);
-  background: rgba(190, 18, 60, 0.08);
+  background: var(--sh-danger-bg);
 }
 
 .quiz__key {

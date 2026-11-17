@@ -109,6 +109,7 @@ function preset(v: number) {
         <circle :cx="dot.x" :cy="dot.y" r="6" class="trade__dot" />
         <circle :cx="dot.x" :cy="dot.y" r="11" class="trade__dot-halo" />
       </svg>
+      <p class="trade__note">收益递减为示意曲线，非实测数据；分区阈值只为便于操作。</p>
     </div>
 
     <div class="trade__panel">
@@ -132,13 +133,15 @@ function preset(v: number) {
         <button type="button" :class="{ 'is-active': zone === 'deliberate' }" @click="preset(88)">深度规划</button>
       </div>
 
-      <div id="trade-desc" class="trade__info">
-        <h4>{{ zoneInfo.title }}</h4>
-        <p class="trade__latency">典型延迟：{{ zoneInfo.latency }}</p>
-        <p>{{ zoneInfo.desc }}</p>
-        <p class="trade__cases"><strong>典型场景：</strong>{{ zoneInfo.cases }}</p>
-        <p class="trade__cost">{{ zoneInfo.cost }}</p>
-      </div>
+      <Transition name="sh-fade" mode="out-in">
+        <div id="trade-desc" :key="zone" class="trade__info">
+          <h4>{{ zoneInfo.title }}</h4>
+          <p class="trade__latency">典型延迟：{{ zoneInfo.latency }}</p>
+          <p>{{ zoneInfo.desc }}</p>
+          <p class="trade__cases"><strong>典型场景：</strong>{{ zoneInfo.cases }}</p>
+          <p class="trade__cost">{{ zoneInfo.cost }}</p>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -200,6 +203,13 @@ function preset(v: number) {
 .trade__dot-halo {
   fill: var(--vp-c-brand-soft);
   opacity: 0.6;
+}
+
+.trade__note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--vp-c-text-3);
 }
 
 .trade__panel {

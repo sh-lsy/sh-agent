@@ -93,7 +93,7 @@
 }
 .sh-badge--danger {
   color: var(--sh-danger);
-  background: rgba(190, 18, 60, 0.1);
+  background: var(--sh-danger-bg);
 }
 
 /* ============================================================
@@ -172,7 +172,7 @@
   border: 1px solid var(--sh-border);
 }
 
-.sh-art--lift img {
+.dark .sh-art--lift img {
   filter: brightness(1.45) contrast(1.08);
 }
 
@@ -197,4 +197,104 @@
     max-width: 300px;
     max-height: 300px;
   }
+}
+
+/* ============================================================
+   8. 布局：侧栏整体折叠 + 大屏宽版心
+   sh-wide / sh-collapsed 由 head 内联脚本与 SidebarToggle 放到 <html> 上。
+   注意：VitePress 原规则带 scoped attr（特异性 0,4,0），
+   覆盖必须带 html.sh-* 前缀（0,4,1）才能稳赢，裸 html 前缀会输。
+   ============================================================ */
+@media (min-width: 1440px) {
+  :root {
+    --vp-layout-max-width: 1680px;
+  }
+}
+
+@media (min-width: 960px) {
+  html.sh-wide .VPDoc.has-aside .content-container {
+    max-width: 900px;
+    margin: 0 32px;
+  }
+  html.sh-collapsed .VPSidebar {
+    display: none;
+  }
+  /* 折叠后回到标准「无侧栏」版式：文档整体居中，消除左右不对称留白 */
+  html.sh-collapsed .VPContent.has-sidebar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  html.sh-collapsed .VPDoc .container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  /* 导航栏：logo 归位最左；底边框改挂全宽 container，
+     并清掉子元素自带边框（原边框挂在 title/链接上，static 后会断成几段） */
+  html.sh-collapsed .VPNavBar.has-sidebar {
+    background: var(--vp-nav-bg-color);
+  }
+  /* VitePress 的底边是独立元素 .divider-line（只覆盖 content 区），
+     折叠态隐藏它，改由导航自身伪元素画整条，避免断线 */
+  html.sh-collapsed .VPNavBar.has-sidebar .divider-line {
+    display: none;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .container {
+    border-bottom: 0;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--vp-c-gutter);
+    z-index: 3;
+    pointer-events: none;
+  }
+  /* 内层 body 自带背景与左 padding 会把底边切出缺口，折叠态统一透明归零 */
+  html.sh-collapsed .VPNavBar.has-sidebar .content-body {
+    background: transparent;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .title {
+    background: transparent;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .title,
+  html.sh-collapsed .VPNavBar.has-sidebar .title a,
+  html.sh-collapsed .VPNavBar.has-sidebar .content,
+  html.sh-collapsed .VPNavBar.has-sidebar .content-body {
+    border-bottom: 0 !important;
+    /* VitePress 的导航底边实际是 box-shadow 画的，不清掉会留下断线 */
+    box-shadow: none !important;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .title {
+    position: static;
+    width: auto;
+    padding: 0 24px 0 32px;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .title a {
+    padding-left: 0;
+  }
+  html.sh-collapsed .VPNavBar.has-sidebar .content {
+    padding-left: 0;
+    padding-right: 32px;
+  }
+}
+
+/* ============================================================
+   9. 共享微过渡：面板/旁白切换不再硬切
+   ============================================================ */
+.sh-fade-enter-active,
+.sh-fade-leave-active {
+  transition: opacity 0.18s var(--sh-ease-out), transform 0.18s var(--sh-ease-out);
+}
+.sh-fade-enter-from {
+  opacity: 0;
+  transform: translateY(3px);
+}
+.sh-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-2px);
 }

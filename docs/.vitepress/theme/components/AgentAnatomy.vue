@@ -40,7 +40,7 @@ const parts: Part[] = [
     one: '模型触碰真实世界的唯一出口',
     duty: '每个工具是一段带 JSON Schema 的普通函数。模型不执行代码，它只产出「调用意图」，由你的运行时校验参数后执行。',
     change:
-      '工具不再是硬编码在 prompt 里的字符串，而是 MCP 服务器声明的能力清单；页面自己也能通过 WebMCP 把前端函数暴露成工具。',
+      '原生 Function Calling 的 tools 仍每轮随请求发送；变化的是组织方式：工具可以由 MCP 服务器声明、运行时动态发现，页面也能通过 WebMCP 把前端函数暴露成工具。',
     vue: '像事件处理器：模型只负责 emit("call", payload)，真正干活和兜底是你的代码。',
   },
   {
@@ -96,19 +96,21 @@ function select(p: Part) {
       </button>
     </div>
 
-    <div class="anatomy__detail" role="tabpanel" aria-live="polite">
-      <div class="anatomy__detail-head">
-        <span class="anatomy__badge">{{ current.icon }} {{ current.name }} · {{ current.en }}</span>
+    <Transition name="sh-fade" mode="out-in">
+      <div :key="active" class="anatomy__detail" role="tabpanel" aria-live="polite">
+        <div class="anatomy__detail-head">
+          <span class="anatomy__badge">{{ current.icon }} {{ current.name }} · {{ current.en }}</span>
+        </div>
+        <dl>
+          <dt>它负责什么</dt>
+          <dd>{{ current.duty }}</dd>
+          <dt>与旧写法的差别</dt>
+          <dd>{{ current.change }}</dd>
+          <dt>前端类比</dt>
+          <dd class="anatomy__vue">{{ current.vue }}</dd>
+        </dl>
       </div>
-      <dl>
-        <dt>它负责什么</dt>
-        <dd>{{ current.duty }}</dd>
-        <dt>与旧写法的差别</dt>
-        <dd>{{ current.change }}</dd>
-        <dt>前端类比</dt>
-        <dd class="anatomy__vue">{{ current.vue }}</dd>
-      </dl>
-    </div>
+    </Transition>
   </div>
 </template>
 

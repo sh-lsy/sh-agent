@@ -142,6 +142,7 @@ Copy-Item .env.example .env # Windows PowerShell
   * [x] 1.5 手写第一个智能体：Zod + 原生 Function Calling ([笔记](docs/01-fundamentals/1.5-first-agent.md))
   * [x] 1.6 协议栈与适用边界：MCP 2026-07-28 / A2A / WebMCP / Workflow vs Agent ([笔记](docs/01-fundamentals/1.6-protocols-and-boundary.md))
   * [x] 1.7 小结与 12 道自测 ([笔记](docs/01-fundamentals/1.7-summary.md))
+  * [x] 文档站体验：侧栏整体折叠、大屏宽版心、实验台动画与中止安全打磨 ([主题](docs/.vitepress/theme/index.ts))
   * [ ] 提示词工程（Prompt Engineering）与结构化输出（下一步）
 * [ ] **第二部分：智能体经典范式构建**
   * [x] 工具抽象与 Zod 参数校验 (`learning/02-paradigms/src/tools.ts`)

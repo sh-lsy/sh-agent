@@ -226,7 +226,7 @@ const incident = ref(false);
 }
 .pc__step.is-error {
   border-color: var(--sh-danger);
-  background: rgba(190, 18, 60, 0.08);
+  background: var(--sh-danger-bg);
 }
 .pc__step.is-loop {
   border-color: var(--sh-observe);
@@ -273,7 +273,7 @@ const incident = ref(false);
 }
 .pc__verdict--bad {
   color: var(--sh-danger);
-  background: rgba(190, 18, 60, 0.08);
+  background: var(--sh-danger-bg);
 }
 .pc__verdict--good {
   color: var(--sh-observe);

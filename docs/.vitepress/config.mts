@@ -16,7 +16,16 @@ export default defineConfig({
   description: '前端开发者的 Agent 系统学习之旅 —— 基于 Hello-Agents 的 TypeScript 重构实践',
   base: '/',
   lang: 'zh-CN',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]],
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    // 首绘前恢复布局偏好：sh-wide 常置（宽版心覆盖需要它赢特异性），
+    // sh-collapsed 来自 localStorage，避免刷新时侧栏先展开再收起的闪烁。
+    [
+      'script',
+      {},
+      `try{var d=document.documentElement;d.classList.add('sh-wide');if(localStorage.getItem('sh-sidebar-collapsed')==='1')d.classList.add('sh-collapsed');}catch(e){}`,
+    ],
+  ],
   vite: {
     resolve: {
       alias: [

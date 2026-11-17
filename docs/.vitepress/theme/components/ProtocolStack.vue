@@ -98,10 +98,12 @@ function pick(l: Layer) {
       </button>
     </div>
 
-    <div class="stack__detail" role="tabpanel" aria-live="polite">
-      <p class="stack__desc">{{ current.detail }}</p>
-      <p class="stack__owner">{{ current.owner }}</p>
-    </div>
+    <Transition name="sh-fade" mode="out-in">
+      <div :key="active" class="stack__detail" role="tabpanel" aria-live="polite">
+        <p class="stack__desc">{{ current.detail }}</p>
+        <p class="stack__owner">{{ current.owner }}</p>
+      </div>
+    </Transition>
   </div>
 </template>
 

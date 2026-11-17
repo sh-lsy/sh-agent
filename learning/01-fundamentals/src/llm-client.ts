@@ -5,9 +5,12 @@ import OpenAI from 'openai';
  * 获取初始化的 OpenAI 兼容客户端
  * 支持配置 DeepSeek、通义千问、硅基流动、智谱等所有兼容 OpenAI 格式的接口
  */
+/** 默认网关：与文档站状态页共用同一口径，避免两处各写一份默认值 */
+export const DEFAULT_BASE_URL = 'https://api.deepseek.com/v1';
+
 export function createLLMClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL || 'https://api.deepseek.com/v1';
+  const baseURL = process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
 
   if (!apiKey || apiKey === 'your_api_key_here') {
     throw new Error(
@@ -18,6 +21,8 @@ export function createLLMClient(): OpenAI {
   return new OpenAI({
     apiKey,
     baseURL,
+    // 单次请求硬超时：避免模型排队/网络中断时挂着连接无限等待
+    timeout: 60_000,
   });
 }
 
